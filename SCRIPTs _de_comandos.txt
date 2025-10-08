@@ -1,0 +1,244 @@
+-- cria o banco de dados e seleciona para uso
+create database acompanhamento_doencas_cronicas;
+use acompanhamento_doencas_cronicas;
+
+-- tabela paciente
+create table paciente (
+    id_paciente int primary key auto_increment,
+    nome varchar(255) not null,
+    cpf varchar(11) unique not null,
+    data_nascimento date,
+    telefone_celular varchar(20),
+    telefone_residencial varchar(20),
+    email varchar(255)
+);
+
+-- tabela medico
+create table medico (
+    id_medico int primary key auto_increment,
+    crm varchar(20) unique not null,
+    nome varchar(255) not null,
+    especialidade varchar(100)
+);
+
+-- tabela doenca_cronica
+create table doenca_cronica (
+    id_doenca int primary key auto_increment,
+    nome_cientifico varchar(255) unique not null,
+    nome_popular varchar(255)
+);
+
+-- tabela medicamento
+create table medicamento (
+    id_medicamento int primary key auto_increment,
+    nome_comercial varchar(255) not null,
+    principio_ativo varchar(255)
+);
+
+-- tabela de relacionamento acompanha
+create table acompanha (
+    id_medico int,
+    id_paciente int,
+    primary key (id_medico, id_paciente),
+    foreign key (id_medico) references medico(id_medico)
+    on update cascade
+    on delete no action,
+    foreign key (id_paciente) references paciente(id_paciente)
+    on update cascade
+    on delete no action
+);
+
+-- tabela de relacionamento diagnostica
+create table diagnostica (
+    id_paciente int,
+    id_doenca int,
+    primary key (id_paciente, id_doenca),
+    foreign key (id_paciente) references paciente(id_paciente)
+    on update cascade
+    on delete no action,
+    foreign key (id_doenca) references doenca_cronica(id_doenca)
+    on update cascade
+    on delete no action
+);
+
+-- tabela prescricao
+create table prescricao (
+    id_prescricao int primary key auto_increment,
+    id_medico int,
+    id_paciente int,
+    id_medicamento int,
+    data_inicio date not null,
+    dosagem varchar(50),
+    frequencia varchar(50),
+    instrucoes_adicionais text,
+    foreign key (id_medico) references medico(id_medico)
+    on update cascade
+    on delete no action,
+    foreign key (id_paciente) references paciente(id_paciente)
+    on update cascade
+    on delete no action,
+    foreign key (id_medicamento) references medicamento(id_medicamento)
+    on update cascade
+    on delete no action
+);
+
+-- tabela lembrete
+create table lembrete (
+    id_lembrete int primary key auto_increment,
+    id_prescricao int,
+    horario_programado datetime not null,
+    status varchar(50),
+    foreign key (id_prescricao) references prescricao(id_prescricao)
+    on update cascade
+    on delete no action
+);
+
+-- tabela base para medições (COM A CORREÇÃO)
+create table medicao (
+    id_medicao int primary key auto_increment,
+    id_paciente int,
+    data_hora timestamp not null default current_timestamp,
+    observacoes text,
+    foreign key (id_paciente) references paciente(id_paciente)
+    on update cascade
+    on delete no action
+);
+
+-- tabela para medição de glicemia
+create table medicao_glicemia (
+    id_medicao int primary key,
+    nivel_glicose decimal(5, 2) not null,
+    periodo varchar(50),
+    foreign key (id_medicao) references medicao(id_medicao)
+    on update cascade
+    on delete cascade
+);
+
+-- tabela para medição de pressão
+create table medicao_pressao (
+    id_medicao int primary key,
+    pressao_sistolica decimal(5, 2) not null,
+    pressao_diastolica decimal(5, 2) not null,
+    foreign key (id_medicao) references medicao(id_medicao)
+    on update cascade
+    on delete cascade
+);
+
+-- Inserindo dados na tabela PACIENTE
+INSERT INTO paciente (nome, cpf, data_nascimento, telefone_celular, telefone_residencial, email) VALUES
+('Carlos Santana', '11122233344', '1955-07-20', '11987654321', '1145678901', 'carlos.santana@email.com'),
+('Mariana Costa', '22233344455', '1982-03-15', '21998877665', '2123456789', 'mariana.costa@email.com'),
+('João Pedro', '33344455566', '1990-11-01', '31988887777', '3134567890', 'joao.pedro@email.com'),
+('Ana Oliveira', '44455566677', '1978-01-30', '41977776666', '4145678901', 'ana.oliveira@email.com');
+
+-- Inserindo dados na tabela MEDICO
+INSERT INTO medico (crm, nome, especialidade) VALUES
+('12345-SP', 'Dr. Roberto Alves', 'Cardiologia'),
+('54321-RJ', 'Dra. Lúcia Martins', 'Endocrinologia'),
+('67890-MG', 'Dr. Fernando Dias', 'Clínica Geral');
+
+-- Inserindo dados na tabela DOENCA_CRONICA
+INSERT INTO doenca_cronica (nome_cientifico, nome_popular) VALUES
+('Hipertensão Arterial Sistêmica', 'Pressão Alta'),
+('Diabetes Mellitus Tipo 2', 'Diabetes');
+
+-- Inserindo dados na tabela MEDICAMENTO
+INSERT INTO medicamento (nome_comercial, principio_ativo) VALUES
+('Losartana Potássica 50mg', 'Losartana'),
+('Metformina 850mg', 'Cloridrato de Metformina'),
+('Atenolol 25mg', 'Atenolol'),
+('Glibenclamida 5mg', 'Glibenclamida');
+
+-- Relacionando médicos e pacientes na tabela ACOMPANHA
+INSERT INTO acompanha (id_medico, id_paciente) VALUES
+(1, 1), -- Dr. Roberto acompanha Carlos
+(2, 2), -- Dra. Lúcia acompanha Mariana
+(1, 3), -- Dr. Roberto acompanha João Pedro
+(2, 4); -- Dra. Lúcia acompanha Ana
+
+-- Relacionando diagnósticos aos pacientes na tabela DIAGNOSTICA
+INSERT INTO diagnostica (id_paciente, id_doenca) VALUES
+(1, 1), -- Carlos tem Hipertensão
+(2, 2), -- Mariana tem Diabetes
+(3, 1), -- João Pedro tem Hipertensão
+(4, 2); -- Ana tem Diabetes
+
+-- Criando prescrições na tabela PRESCRICAO
+INSERT INTO prescricao (id_medico, id_paciente, id_medicamento, data_inicio, dosagem, frequencia, instrucoes_adicionais) VALUES
+(1, 1, 1, '2024-01-10', '1 comprimido', '1 vez ao dia', 'Tomar pela manhã.'),
+(2, 2, 2, '2024-02-15', '1 comprimido', '2 vezes ao dia', 'Tomar após o café da manhã e após o jantar.'),
+(1, 3, 3, '2024-03-20', '1 comprimido', '1 vez ao dia', 'Tomar antes de dormir.'),
+(2, 4, 4, '2024-04-05', '1 comprimido', '1 vez ao dia', 'Tomar 30 minutos antes do almoço.');
+
+-- Criando lembretes para as prescrições na tabela LEMBRETE
+INSERT INTO lembrete (id_prescricao, horario_programado, status) VALUES
+(1, '2025-09-28 08:00:00', 'Pendente'),
+(2, '2025-09-28 09:00:00', 'Pendente'),
+(2, '2025-09-28 20:00:00', 'Pendente'),
+(3, '2025-09-28 22:00:00', 'Pendente');
+
+-- Inserindo medições genéricas na tabela MEDICAO
+INSERT INTO medicao (id_paciente, data_hora, observacoes) VALUES
+(1, '2025-09-27 09:00:00', 'Medição de rotina da pressão.'),
+(2, '2025-09-27 08:30:00', 'Medição de glicose em jejum.'),
+(1, '2025-09-28 09:05:00', 'Medição após caminhada leve.');
+
+-- Inserindo medições específicas de pressão na tabela MEDICAO_PRESSAO
+INSERT INTO medicao_pressao (id_medicao, pressao_sistolica, pressao_diastolica) VALUES
+(1, 13.8, 8.5),
+(3, 13.2, 8.1);
+
+-- Inserindo medições específicas de glicemia na tabela MEDICAO_GLICEMIA
+INSERT INTO medicao_glicemia (id_medicao, nivel_glicose, periodo) VALUES
+(2, 99.00, 'Jejum');
+
+-- 3. MANIPULAÇÃO E CONSULTA DE DADOS (EXEMPLOS)
+
+-- Consulta 1: Listar todos os pacientes e seus respectivos médicos.
+SELECT 
+    p.nome AS Nome_Paciente,
+    m.nome AS Nome_Medico,
+    m.especialidade AS Especialidade_Medico
+FROM 
+    paciente p
+INNER JOIN 
+    acompanha a ON p.id_paciente = a.id_paciente
+INNER JOIN 
+    medico m ON a.id_medico = m.id_medico
+ORDER BY 
+    Nome_Medico, Nome_Paciente;
+
+-- Consulta 2: Exibir todas as prescrições feitas para um paciente específico (ex: Mariana Costa).
+SELECT
+    p.nome AS Nome_Paciente,
+    med.nome_comercial AS Medicamento,
+    pr.dosagem,
+    pr.frequencia,
+    pr.data_inicio AS Inicio_Tratamento,
+    pr.instrucoes_adicionais
+FROM 
+    prescricao pr
+INNER JOIN 
+    paciente p ON pr.id_paciente = p.id_paciente
+INNER JOIN 
+    medicamento med ON pr.id_medicamento = med.id_medicamento
+WHERE 
+    p.nome = 'Mariana Costa';
+
+-- Atualização 1: Atualizar o status de um lembrete para 'Tomado'.
+UPDATE lembrete
+SET 
+    status = 'Tomado'
+WHERE 
+    id_lembrete = 1;
+
+-- Atualização 2: Alterar o número de telefone de um paciente.
+UPDATE paciente
+SET 
+    telefone_celular = '11999998888',
+    email = 'c.santana.novo@email.com'
+WHERE 
+    id_paciente = 1;
+
+-- Verificando a atualização do paciente Carlos Santana
+SELECT * FROM paciente WHERE id_paciente = 1;
